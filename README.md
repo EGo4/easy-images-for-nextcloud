@@ -1,2 +1,3 @@
-# easy-images-for-nextcloud
-App that uploads and retrieves images from Nextcloud. Focus on easy of use.
+# easy_images_for_nextcloud
+
+A new Flutter project.
