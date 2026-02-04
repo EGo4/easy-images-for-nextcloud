@@ -9,6 +9,15 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  cupertino_icons: ^1.0.8
+  # For accessing Camera and Gallery
+  image_picker: ^1.0.7
+  # For communicating with Nextcloud
+  webdav_client: ^1.0.0
+  # For path manipulation
+  path: ^1.9.0
+  # For handling permissions (optional but recommended for real apps)
+  permission_handler: ^11.3.0
 
 dev_dependencies:
   flutter_test:
