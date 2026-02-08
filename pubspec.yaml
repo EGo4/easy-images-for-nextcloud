@@ -12,7 +12,6 @@ dependencies:
   cupertino_icons: ^1.0.8
   # For accessing Camera and Gallery
   image_picker: ^1.0.7
-  photo_manager: ^3.3.0~
   # For communicating with Nextcloud
   webdav_client: ^1.0.0
   # For path manipulation

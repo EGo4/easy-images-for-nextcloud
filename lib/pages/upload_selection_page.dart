@@ -41,6 +41,18 @@ class _UploadSelectionPageState extends State<UploadSelectionPage> {
     }
   }
 
+  Future<void> _pickAdditionalFiles() async {
+    if (widget.source == ImageSource.gallery) {
+      final List<XFile>? images = await _picker.pickMultiImage();
+      if (images != null && images.isNotEmpty) {
+        setState(() => _selectedFiles.addAll(images));
+      }
+    } else {
+      final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+      if (image != null) setState(() => _selectedFiles.add(image));
+    }
+  }
+
   Future<void> _startUpload() async {
     if (_selectedFiles.isEmpty) return;
 
@@ -79,7 +91,16 @@ class _UploadSelectionPageState extends State<UploadSelectionPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Confirm Upload")),
+      appBar: AppBar(
+        title: const Text("Confirm Upload"),
+        actions: [
+          IconButton(
+            tooltip: 'Select more',
+            icon: const Icon(Icons.add_photo_alternate),
+            onPressed: _pickAdditionalFiles,
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Padding(
