@@ -129,10 +129,38 @@ class _UploadSelectionPageState extends State<UploadSelectionPage> {
                           mainAxisSpacing: 8,
                         ),
                     itemCount: _selectedFiles.length,
-                    itemBuilder: (ctx, i) => Image.file(
-                      File(_selectedFiles[i].path),
-                      fit: BoxFit.cover,
-                    ),
+                    itemBuilder: (ctx, i) {
+                      final file = File(_selectedFiles[i].path);
+                      return Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Image.file(file, fit: BoxFit.cover),
+                          Positioned(
+                            top: 6,
+                            right: 6,
+                            child: InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _selectedFiles.removeAt(i);
+                                });
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.black54,
+                                  shape: BoxShape.circle,
+                                ),
+                                padding: const EdgeInsets.all(4),
+                                child: const Icon(
+                                  Icons.close,
+                                  size: 18,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
           ),
         ],
