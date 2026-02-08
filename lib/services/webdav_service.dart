@@ -1,17 +1,15 @@
 import 'dart:typed_data';
 import 'package:webdav_client/webdav_client.dart' as webdav;
-import '../config.dart';
+import '../config_private.dart';
 
 class WebDavService {
   late webdav.Client _client;
 
   WebDavService() {
     String baseUrl = Config.serverUrl;
-    // Nextcloud specific path correction
     if (!baseUrl.contains('remote.php/dav/files')) {
       baseUrl = '${Config.serverUrl}/remote.php/dav/files/${Config.username}';
     }
-
     _client = webdav.newClient(
       baseUrl,
       user: Config.username,
@@ -21,7 +19,6 @@ class WebDavService {
 
   Future<List<webdav.File>> getFolders(String path) async {
     final list = await _client.readDir(path);
-    // Return only directories and sort them
     final folders = list.where((f) => f.isDir ?? false).toList();
     folders.sort((a, b) => (a.name ?? '').compareTo(b.name ?? ''));
     return folders;
