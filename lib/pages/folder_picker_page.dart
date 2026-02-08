@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:webdav_client/webdav_client.dart' as webdav;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../services/webdav_service.dart';
-import '../config_private.dart'; // Corrected import to match your config file
 import 'upload_selection_page.dart';
 
 class FolderPickerPage extends StatefulWidget {
@@ -17,7 +17,8 @@ class FolderPickerPage extends StatefulWidget {
 class _FolderPickerPageState extends State<FolderPickerPage> {
   final _service = WebDavService();
   List<webdav.File> _folders = [];
-  String _currentPath = Config.defaultUploadPath;
+  String _currentPath = "/";
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
   bool _isLoading = true;
 
   @override
@@ -28,6 +29,11 @@ class _FolderPickerPageState extends State<FolderPickerPage> {
 
   Future<void> _initialLoad() async {
     try {
+      // Load saved default upload path from secure storage if present
+      final saved = await _storage.read(key: 'nextcloud_path');
+      if (saved != null && saved.isNotEmpty) {
+        _currentPath = saved;
+      }
       await _fetchFolders(_currentPath);
     } catch (e) {
       // If the default path doesn't exist/fails, start at root

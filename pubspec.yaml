@@ -18,6 +18,8 @@ dependencies:
   path: ^1.9.0
   # For handling permissions (optional but recommended for real apps)
   permission_handler: ^11.3.0
+  # Secure storage for credentials
+  flutter_secure_storage: ^8.0.0
 
 
 

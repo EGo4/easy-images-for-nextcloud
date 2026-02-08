@@ -1,30 +1,57 @@
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:webdav_client/webdav_client.dart' as webdav;
-import '../config_private.dart';
 
 class WebDavService {
-  late webdav.Client _client;
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
-  WebDavService() {
-    String baseUrl = Config.serverUrl;
-    if (!baseUrl.contains('remote.php/dav/files')) {
-      baseUrl = '${Config.serverUrl}/remote.php/dav/files/${Config.username}';
+  WebDavService();
+
+  Future<_Creds> _readCreds() async {
+    final server = await _storage.read(key: 'nextcloud_server');
+    final user = await _storage.read(key: 'nextcloud_user');
+    final pass = await _storage.read(key: 'nextcloud_pass');
+
+    final cfgServer = (server != null && server.isNotEmpty) ? server : "";
+    final cfgUser = (user != null && user.isNotEmpty) ? user : "";
+    final cfgPass = pass ?? "";
+
+    String mask(String s) {
+      if (s.isEmpty) return '<empty>';
+      if (s.length <= 2) return List.filled(s.length, '*').join();
+      return '${s[0]}${List.filled(s.length - 2, '*').join()}${s[s.length - 1]}';
     }
-    _client = webdav.newClient(
-      baseUrl,
-      user: Config.username,
-      password: Config.password,
-    );
+
+    return _Creds(server: cfgServer, user: cfgUser, pass: cfgPass);
+  }
+
+  Future<webdav.Client> _createClient() async {
+    final c = await _readCreds();
+    String baseUrl = c.server;
+    if (!baseUrl.contains('remote.php/dav/files')) {
+      baseUrl = '${c.server}/remote.php/dav/files/${c.user}';
+    }
+    return webdav.newClient(baseUrl, user: c.user, password: c.pass);
   }
 
   Future<List<webdav.File>> getFolders(String path) async {
-    final list = await _client.readDir(path);
+    final client = await _createClient();
+    final list = await client.readDir(path);
     final folders = list.where((f) => f.isDir ?? false).toList();
     folders.sort((a, b) => (a.name ?? '').compareTo(b.name ?? ''));
     return folders;
   }
 
   Future<void> uploadFile(String remotePath, Uint8List bytes) async {
-    await _client.write(remotePath, bytes);
+    final client = await _createClient();
+    await client.write(remotePath, bytes);
   }
+}
+
+class _Creds {
+  final String server;
+  final String user;
+  final String pass;
+  _Creds({required this.server, required this.user, required this.pass});
 }
