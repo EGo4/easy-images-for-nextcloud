@@ -44,3 +44,4 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 /easy_images_for_nextcloud
+**/config_private.dart
