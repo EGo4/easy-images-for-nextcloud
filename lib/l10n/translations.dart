@@ -3,7 +3,7 @@ import '../app_locale.dart';
 
 const Map<String, Map<String, String>> _translations = {
   'en': {
-    'app_title': 'Nextcloud Uploader',
+    'app_title': 'Easy Images for Nextcloud',
     'camera': 'Camera',
     'gallery': 'Gallery',
     'select_folder': 'Select this Folder',
@@ -23,7 +23,7 @@ const Map<String, Map<String, String>> _translations = {
     'save': 'Save',
   },
   'de': {
-    'app_title': 'Nextcloud Hochlader',
+    'app_title': 'Bilder-Upload für Nextcloud',
     'camera': 'Kamera',
     'gallery': 'Galerie',
     'select_folder': 'Ordner wählen',

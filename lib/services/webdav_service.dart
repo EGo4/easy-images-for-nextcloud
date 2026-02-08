@@ -43,6 +43,29 @@ class WebDavService {
     return folders;
   }
 
+  /// Return files (non-directories) in the given remote path.
+  Future<List<webdav.File>> getFiles(String path) async {
+    final client = await _createClient();
+    final list = await client.readDir(path);
+    final files = list.where((f) => !(f.isDir ?? false)).toList();
+    files.sort((a, b) => (a.name ?? '').compareTo(b.name ?? ''));
+    return files;
+  }
+
+  /// Download a remote file and return its bytes.
+  Future<Uint8List?> downloadFile(String remotePath) async {
+    try {
+      final client = await _createClient();
+      final data = await client.read(remotePath);
+      if (data is Uint8List) return data;
+      if (data is List<int>) return Uint8List.fromList(data);
+      return null;
+    } catch (e) {
+      debugPrint('WebDavService: downloadFile error: $e');
+      return null;
+    }
+  }
+
   Future<void> uploadFile(String remotePath, Uint8List bytes) async {
     final client = await _createClient();
     await client.write(remotePath, bytes);

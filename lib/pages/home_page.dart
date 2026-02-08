@@ -4,6 +4,7 @@ import 'folder_picker_page.dart'; // Updated import
 import 'settings_page.dart';
 import '../l10n/translations.dart';
 import '../app_locale.dart';
+import 'viewer_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -51,6 +52,17 @@ class _HomePageState extends State<HomePage> {
                   color: Colors.green.shade50,
                   iconColor: Colors.green.shade700,
                   onTap: () => _nav(ImageSource.gallery),
+                ),
+                const SizedBox(height: 24),
+                _MenuButton(
+                  icon: Icons.image_search,
+                  label: 'Viewer',
+                  color: Colors.purple.shade50,
+                  iconColor: Colors.purple.shade700,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ViewerPage()),
+                  ),
                 ),
               ],
             ),
