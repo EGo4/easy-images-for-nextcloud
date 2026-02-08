@@ -5,6 +5,7 @@ import 'package:webdav_client/webdav_client.dart' as webdav;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../services/webdav_service.dart';
 import 'upload_selection_page.dart';
+import '../l10n/translations.dart';
 
 class FolderPickerPage extends StatefulWidget {
   final ImageSource source;
@@ -69,7 +70,7 @@ class _FolderPickerPageState extends State<FolderPickerPage> {
           children: [
             Text(
               p.basename(_currentPath).isEmpty
-                  ? "Nextcloud"
+                  ? t(context, 'nextcloud')
                   : p.basename(_currentPath),
               style: const TextStyle(fontSize: 18),
             ),
@@ -120,7 +121,7 @@ class _FolderPickerPageState extends State<FolderPickerPage> {
             ),
           );
         },
-        label: const Text('Select this Folder'),
+        label: Text(t(context, 'select_folder')),
         icon: const Icon(Icons.check_circle),
       ),
     );

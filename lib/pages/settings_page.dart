@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../app_locale.dart';
+import '../l10n/translations.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -16,6 +18,7 @@ class _SettingsPageState extends State<SettingsPage> {
   final _pathController = TextEditingController();
   final _storage = const FlutterSecureStorage();
   bool _loading = true;
+  String? _selectedLocale;
 
   static const _keyServer = 'nextcloud_server';
   static const _keyUser = 'nextcloud_user';
@@ -39,6 +42,11 @@ class _SettingsPageState extends State<SettingsPage> {
     _passwordController.text = pass;
     _pathController.text = path;
 
+    final savedLocale = await _storage.read(key: 'app_locale');
+    if (savedLocale != null && savedLocale.isNotEmpty) {
+      _selectedLocale = savedLocale;
+    }
+
     setState(() => _loading = false);
   }
 
@@ -48,11 +56,15 @@ class _SettingsPageState extends State<SettingsPage> {
     await _storage.write(key: _keyUser, value: _usernameController.text.trim());
     await _storage.write(key: _keyPass, value: _passwordController.text);
     await _storage.write(key: _keyPath, value: _pathController.text.trim());
+    if (_selectedLocale != null) {
+      await _storage.write(key: 'app_locale', value: _selectedLocale);
+      appLocale.value = Locale(_selectedLocale!);
+    }
 
     if (!mounted) return;
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('Settings saved')));
+    ).showSnackBar(SnackBar(content: Text(t(context, 'settings') + ' saved')));
   }
 
   @override
@@ -67,7 +79,7 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text(t(context, 'settings'))),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : Padding(
@@ -78,8 +90,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   children: [
                     TextFormField(
                       controller: _serverController,
-                      decoration: const InputDecoration(
-                        labelText: 'Nextcloud server URL',
+                      decoration: InputDecoration(
+                        labelText: t(context, 'nextcloud_server_url'),
                         hintText: 'https://nextcloud.example.com',
                       ),
                       keyboardType: TextInputType.url,
@@ -89,25 +101,42 @@ class _SettingsPageState extends State<SettingsPage> {
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _usernameController,
-                      decoration: const InputDecoration(labelText: 'Username'),
+                      decoration: InputDecoration(
+                        labelText: t(context, 'username'),
+                      ),
                       validator: (v) =>
                           (v == null || v.trim().isEmpty) ? 'Required' : null,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _passwordController,
-                      decoration: const InputDecoration(labelText: 'Password'),
+                      decoration: InputDecoration(
+                        labelText: t(context, 'password'),
+                      ),
                       obscureText: true,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _pathController,
-                      decoration: const InputDecoration(
-                        labelText: 'Default upload path',
+                      decoration: InputDecoration(
+                        labelText: t(context, 'default_upload_path'),
                       ),
                     ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      value: _selectedLocale ?? 'en',
+                      decoration: const InputDecoration(labelText: 'Language'),
+                      items: const [
+                        DropdownMenuItem(value: 'en', child: Text('English')),
+                        DropdownMenuItem(value: 'de', child: Text('Deutsch')),
+                      ],
+                      onChanged: (v) => setState(() => _selectedLocale = v),
+                    ),
                     const SizedBox(height: 24),
-                    ElevatedButton(onPressed: _save, child: const Text('Save')),
+                    ElevatedButton(
+                      onPressed: _save,
+                      child: Text(t(context, 'save')),
+                    ),
                   ],
                 ),
               ),

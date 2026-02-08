@@ -2,54 +2,65 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'folder_picker_page.dart'; // Updated import
 import 'settings_page.dart';
-import '../config.dart';
+import '../l10n/translations.dart';
+import '../app_locale.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(Config.appTitle),
-        elevation: 0,
-        actions: [
-          IconButton(
-            tooltip: 'Settings',
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const SettingsPage()),
+    return ValueListenableBuilder(
+      valueListenable: appLocale,
+      builder: (context, _, __) {
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(t(context, 'app_title')),
+            elevation: 0,
+            actions: [
+              IconButton(
+                tooltip: 'Settings',
+                icon: const Icon(Icons.settings_outlined),
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SettingsPage()),
+                ),
+              ),
+            ],
+          ),
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _MenuButton(
+                  icon: Icons.camera_alt_rounded,
+                  label: t(context, 'camera'),
+                  color: Colors.blue.shade50,
+                  iconColor: Colors.blue.shade700,
+                  onTap: () => _nav(ImageSource.camera),
+                ),
+                const SizedBox(height: 24),
+                _MenuButton(
+                  icon: Icons.photo_library_rounded,
+                  label: t(context, 'gallery'),
+                  color: Colors.green.shade50,
+                  iconColor: Colors.green.shade700,
+                  onTap: () => _nav(ImageSource.gallery),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _MenuButton(
-              icon: Icons.camera_alt_rounded,
-              label: 'Camera',
-              color: Colors.blue.shade50,
-              iconColor: Colors.blue.shade700,
-              onTap: () => _nav(context, ImageSource.camera),
-            ),
-            const SizedBox(height: 24),
-            _MenuButton(
-              icon: Icons.photo_library_rounded,
-              label: 'Gallery',
-              color: Colors.green.shade50,
-              iconColor: Colors.green.shade700,
-              onTap: () => _nav(context, ImageSource.gallery),
-            ),
-          ],
-        ),
-      ),
+        );
+      },
     );
   }
 
-  void _nav(BuildContext context, ImageSource source) {
+  void _nav(ImageSource source) {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => FolderPickerPage(source: source)),
