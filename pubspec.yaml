@@ -1,7 +1,7 @@
 name: easy_images_for_nextcloud
-description: "A new Flutter project."
+description: "Upload images without hassle to your Nextcloud instance. Easy Images for Nextcloud is a Flutter app that allows you to quickly and easily upload images from your device's camera or gallery to your Nextcloud server. With a simple and intuitive interface, you can select images, choose your Nextcloud destination, and upload with just a few taps. Whether you're sharing photos with friends or backing up important memories, Easy Images for Nextcloud makes it effortless to keep your images organized and accessible on your Nextcloud instance."
 publish_to: 'none'
-version: 0.1.0
+version: 1.0.0+1
 
 environment:
   sdk: ^3.10.8
@@ -20,6 +20,7 @@ dependencies:
   permission_handler: ^11.3.0
   # Secure storage for credentials
   flutter_secure_storage: ^8.0.0
+  flutter_launcher_icons: ^0.14.4
 
 
 
@@ -27,6 +28,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+
 
 flutter:
   uses-material-design: true
