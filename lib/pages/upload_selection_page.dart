@@ -31,14 +31,25 @@ class _UploadSelectionPageState extends State<UploadSelectionPage> {
   List<XFile> _selectedFiles = [];
   bool _isUploading = false;
   double _uploadProgress = 0;
+  late Map<String, String>
+  _fileStatuses; // 'pending', 'uploading', 'completed', 'failed'
+  int _currentFileIndex = -1;
 
   @override
   void initState() {
     super.initState();
+    _initializeFileStatuses();
     _pickInitialFiles();
     // Check immediately in case app was killed during a background upload
     // and was restarted.
     _checkUploadStatusAndNavigate();
+  }
+
+  void _initializeFileStatuses() {
+    _fileStatuses = {};
+    for (final file in _selectedFiles) {
+      _fileStatuses[file.path] = 'pending';
+    }
   }
 
   @override
@@ -86,30 +97,73 @@ class _UploadSelectionPageState extends State<UploadSelectionPage> {
     if (widget.source == ImageSource.gallery) {
       final List<XFile>? images = await _picker.pickMultiImage();
       if (images != null && images.isNotEmpty) {
-        setState(() => _selectedFiles.addAll(images));
+        setState(() {
+          _selectedFiles.addAll(images);
+          for (final img in images) {
+            _fileStatuses[img.path] = 'pending';
+          }
+        });
       }
     } else {
       final XFile? image = await _picker.pickImage(source: ImageSource.camera);
-      if (image != null) setState(() => _selectedFiles.add(image));
+      if (image != null) {
+        setState(() {
+          _selectedFiles.add(image);
+          _fileStatuses[image.path] = 'pending';
+        });
+      }
     }
   }
 
   Future<void> _startUpload() async {
     if (_selectedFiles.isEmpty) return;
 
-    setState(() => _isUploading = true);
+    setState(() {
+      _isUploading = true;
+      for (final file in _selectedFiles) {
+        _fileStatuses[file.path] = 'pending';
+      }
+    });
 
     try {
       await UploadManager().queueAndUploadFiles(
         files: _selectedFiles,
         remotePath: widget.remotePath,
         onProgress: (p) {
-          if (mounted) setState(() => _uploadProgress = p);
+          if (mounted) {
+            setState(() {
+              _uploadProgress = p;
+              // Estimate which file is currently uploading based on progress
+              final filesPerUnit = 1.0 / _selectedFiles.length;
+              _currentFileIndex = (_uploadProgress / filesPerUnit)
+                  .floor()
+                  .clamp(0, _selectedFiles.length - 1);
+
+              // Update file statuses
+              for (int i = 0; i < _selectedFiles.length; i++) {
+                if (i < _currentFileIndex) {
+                  _fileStatuses[_selectedFiles[i].path] = 'completed';
+                } else if (i == _currentFileIndex) {
+                  _fileStatuses[_selectedFiles[i].path] = 'uploading';
+                } else {
+                  _fileStatuses[_selectedFiles[i].path] = 'pending';
+                }
+              }
+            });
+          }
         },
       );
 
       if (mounted) {
-        setState(() => _isUploading = false);
+        setState(() {
+          _isUploading = false;
+          // Mark any remaining as completed
+          for (final file in _selectedFiles) {
+            if (_fileStatuses[file.path] != 'completed') {
+              _fileStatuses[file.path] = 'completed';
+            }
+          }
+        });
         await _finishUpload('Upload completed successfully!');
       }
     } catch (e) {
@@ -120,6 +174,35 @@ class _UploadSelectionPageState extends State<UploadSelectionPage> {
         ).showSnackBar(SnackBar(content: Text('Upload error: $e')));
       }
     }
+  }
+
+  Widget _buildFileStatusOverlay(int index) {
+    final file = _selectedFiles[index];
+    final status = _fileStatuses[file.path] ?? 'pending';
+
+    IconData icon;
+    Color color;
+
+    switch (status) {
+      case 'completed':
+        icon = Icons.check_circle;
+        color = Colors.green;
+      case 'uploading':
+        icon = Icons.cloud_upload;
+        color = Colors.blue;
+      case 'failed':
+        icon = Icons.error;
+        color = Colors.red;
+      default: // pending
+        icon = Icons.schedule;
+        color = Colors.grey;
+    }
+    return Positioned.fill(
+      child: Container(
+        color: Colors.black54,
+        child: Center(child: Icon(icon, size: 48, color: color)),
+      ),
+    );
   }
 
   @override
@@ -177,29 +260,34 @@ class _UploadSelectionPageState extends State<UploadSelectionPage> {
                           fit: StackFit.expand,
                           children: [
                             Image.file(file, fit: BoxFit.cover),
-                            Positioned(
-                              top: 6,
-                              right: 6,
-                              child: InkWell(
-                                onTap: () {
-                                  setState(() {
-                                    _selectedFiles.removeAt(i);
-                                  });
-                                },
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.black54,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  padding: const EdgeInsets.all(4),
-                                  child: const Icon(
-                                    Icons.close,
-                                    size: 18,
-                                    color: Colors.white,
+                            if (!_isUploading)
+                              Positioned(
+                                top: 6,
+                                right: 6,
+                                child: InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      _fileStatuses.remove(
+                                        _selectedFiles[i].path,
+                                      );
+                                      _selectedFiles.removeAt(i);
+                                    });
+                                  },
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.black54,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    padding: const EdgeInsets.all(4),
+                                    child: const Icon(
+                                      Icons.close,
+                                      size: 18,
+                                      color: Colors.white,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
+                            if (_isUploading) _buildFileStatusOverlay(i),
                           ],
                         ),
                       );
