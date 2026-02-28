@@ -143,34 +143,37 @@ class _UploadSelectionPageState extends State<UploadSelectionPage> {
                     itemCount: _selectedFiles.length,
                     itemBuilder: (ctx, i) {
                       final file = File(_selectedFiles[i].path);
-                      return Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          Image.file(file, fit: BoxFit.cover),
-                          Positioned(
-                            top: 6,
-                            right: 6,
-                            child: InkWell(
-                              onTap: () {
-                                setState(() {
-                                  _selectedFiles.removeAt(i);
-                                });
-                              },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.black54,
-                                  shape: BoxShape.circle,
-                                ),
-                                padding: const EdgeInsets.all(4),
-                                child: const Icon(
-                                  Icons.close,
-                                  size: 18,
-                                  color: Colors.white,
+                      return GestureDetector(
+                        onTap: () => _showImagePreview(file),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Image.file(file, fit: BoxFit.cover),
+                            Positioned(
+                              top: 6,
+                              right: 6,
+                              child: InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    _selectedFiles.removeAt(i);
+                                  });
+                                },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.black54,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  padding: const EdgeInsets.all(4),
+                                  child: const Icon(
+                                    Icons.close,
+                                    size: 18,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       );
                     },
                   ),
@@ -199,6 +202,42 @@ class _UploadSelectionPageState extends State<UploadSelectionPage> {
           ),
         ),
       ),
+    );
+  }
+
+  void _showImagePreview(File file) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) {
+        final size = MediaQuery.of(ctx).size;
+        return Dialog(
+          insetPadding: EdgeInsets.zero,
+          backgroundColor: Colors.black,
+          child: Stack(
+            children: [
+              SizedBox(
+                width: size.width,
+                height: size.height,
+                child: InteractiveViewer(
+                  panEnabled: true,
+                  minScale: 0.5,
+                  maxScale: 5.0,
+                  child: Center(child: Image.file(file, fit: BoxFit.contain)),
+                ),
+              ),
+              Positioned(
+                top: 40,
+                right: 16,
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                  onPressed: () => Navigator.of(ctx).pop(),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
