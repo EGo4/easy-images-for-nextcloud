@@ -2,9 +2,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
+import 'package:workmanager/workmanager.dart';
+
 import '../services/webdav_service.dart';
 import '../l10n/translations.dart';
 import 'package:flutter/widget_previews.dart';
+import '../background.dart';
 
 @Preview(name: 'Upload Selection Page')
 Widget uploadSelectionPagePreview() =>
@@ -62,12 +65,21 @@ class _UploadSelectionPageState extends State<UploadSelectionPage> {
   Future<void> _startUpload() async {
     if (_selectedFiles.isEmpty) return;
 
-    setState(() {
-      _isUploading = true;
-      _uploadProgress = 0;
-    });
+    setState(() => _isUploading = true);
 
     try {
+      // Queue a background task for persistence
+      // This runs even if the app is backgrounded or the screen locks
+      final paths = _selectedFiles.map((f) => f.path).toList();
+      await Workmanager().registerOneOffTask(
+        'uploadTask-${DateTime.now().millisecondsSinceEpoch}',
+        uploadTaskName,
+        inputData: {'paths': paths, 'remotePath': widget.remotePath},
+        existingWorkPolicy: ExistingWorkPolicy.append,
+        backoffPolicy: BackoffPolicy.exponential,
+      );
+
+      // Also perform the upload immediately so user sees progress on-screen
       for (int i = 0; i < _selectedFiles.length; i++) {
         final file = _selectedFiles[i];
         final bytes = await file.readAsBytes();
@@ -75,22 +87,25 @@ class _UploadSelectionPageState extends State<UploadSelectionPage> {
 
         await _service.uploadFile(destination, bytes);
 
-        setState(() {
-          _uploadProgress = (i + 1) / _selectedFiles.length;
-        });
+        if (mounted) {
+          setState(() => _uploadProgress = (i + 1) / _selectedFiles.length);
+        }
       }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('All files uploaded successfully!')),
+          const SnackBar(content: Text('Files queued for upload!')),
         );
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        // Stay on the page instead of popping so user can verify or upload more
+        setState(() => _isUploading = false);
       }
     } catch (e) {
-      setState(() => _isUploading = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      if (mounted) {
+        setState(() => _isUploading = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Upload error: $e')));
+      }
     }
   }
 

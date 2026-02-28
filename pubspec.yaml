@@ -21,6 +21,8 @@ dependencies:
   # Secure storage for credentials
   flutter_secure_storage: ^8.0.0
   flutter_launcher_icons: ^0.14.4
+  # background tasks for Android/iOS
+  workmanager: ^0.9.0+3
 
 
 

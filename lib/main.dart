@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:workmanager/workmanager.dart';
 
 import 'app_theme.dart';
+import 'background.dart';
 import 'pages/home_page.dart';
 import 'config.dart';
 import 'app_locale.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Workmanager for background uploads
+  await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
+
   // load saved manual locale if present
   final storage = const FlutterSecureStorage();
   final code = await storage.read(key: 'app_locale');
