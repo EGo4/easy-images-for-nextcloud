@@ -6,6 +6,11 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../services/webdav_service.dart';
 import 'upload_selection_page.dart';
 import '../l10n/translations.dart';
+import 'package:flutter/widget_previews.dart';
+
+@Preview(name: 'Folder Picker Page')
+Widget folderPickerPagePreview() =>
+    const FolderPickerPage(source: ImageSource.gallery);
 
 class FolderPickerPage extends StatefulWidget {
   final ImageSource source;

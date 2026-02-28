@@ -4,6 +4,12 @@ import 'folder_picker_page.dart'; // Updated import
 import 'settings_page.dart';
 import '../l10n/translations.dart';
 import '../app_locale.dart';
+import 'package:flutter/widget_previews.dart';
+
+// top-level preview function must be public and statically accessible.
+// The previewer uses this annotation to render the widget in VS Code.
+@Preview(name: 'Home Page')
+Widget homePagePreview() => const HomePage();
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});

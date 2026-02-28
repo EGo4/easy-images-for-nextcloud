@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../app_locale.dart';
 import '../l10n/translations.dart';
+import 'package:flutter/widget_previews.dart';
+
+// top-level preview function must be public and statically accessible.
+// The previewer uses this annotation to render the widget in VS Code.
+@Preview(name: 'Settings Page')
+Widget settingsPagePreview() => const SettingsPage();
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -56,15 +62,19 @@ class _SettingsPageState extends State<SettingsPage> {
     await _storage.write(key: _keyUser, value: _usernameController.text.trim());
     await _storage.write(key: _keyPass, value: _passwordController.text);
     await _storage.write(key: _keyPath, value: _pathController.text.trim());
-    if (_selectedLocale != null) {
-      await _storage.write(key: 'app_locale', value: _selectedLocale);
-      appLocale.value = Locale(_selectedLocale!);
-    }
 
     if (!mounted) return;
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(t(context, 'settings') + ' saved')));
+  }
+
+  Future<void> _saveLanguage(String? lang) async {
+    setState(() => _selectedLocale = lang);
+    if (_selectedLocale != null) {
+      await _storage.write(key: 'app_locale', value: _selectedLocale);
+      appLocale.value = Locale(_selectedLocale!);
+    }
   }
 
   @override
@@ -124,13 +134,13 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      value: _selectedLocale ?? 'en',
                       decoration: const InputDecoration(labelText: 'Language'),
                       items: const [
                         DropdownMenuItem(value: 'en', child: Text('English')),
                         DropdownMenuItem(value: 'de', child: Text('Deutsch')),
                       ],
-                      onChanged: (v) => setState(() => _selectedLocale = v),
+                      onChanged: (v) => _saveLanguage(v),
+                      initialValue: _selectedLocale ?? 'en',
                     ),
                     const SizedBox(height: 24),
                     ElevatedButton(

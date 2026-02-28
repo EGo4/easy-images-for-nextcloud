@@ -4,6 +4,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 import '../services/webdav_service.dart';
 import '../l10n/translations.dart';
+import 'package:flutter/widget_previews.dart';
+
+@Preview(name: 'Upload Selection Page')
+Widget uploadSelectionPagePreview() =>
+    const UploadSelectionPage(remotePath: "/", source: ImageSource.gallery);
 
 class UploadSelectionPage extends StatefulWidget {
   final String remotePath;
@@ -115,14 +120,18 @@ class _UploadSelectionPageState extends State<UploadSelectionPage> {
             LinearProgressIndicator(value: _uploadProgress),
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Text(t(context, 'uploading_percent', args: {
-                'pct': '${(_uploadProgress * 100).toInt()}'
-              })),
+              child: Text(
+                t(
+                  context,
+                  'uploading_percent',
+                  args: {'pct': '${(_uploadProgress * 100).toInt()}'},
+                ),
+              ),
             ),
           ],
           Expanded(
             child: _selectedFiles.isEmpty
-              ? Center(child: Text(t(context, 'no_images_selected')))
+                ? Center(child: Text(t(context, 'no_images_selected')))
                 : GridView.builder(
                     padding: const EdgeInsets.all(8),
                     gridDelegate:
@@ -168,16 +177,25 @@ class _UploadSelectionPageState extends State<UploadSelectionPage> {
           ),
         ],
       ),
-          bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ElevatedButton.icon(
-          onPressed: _isUploading || _selectedFiles.isEmpty
-              ? null
-              : _startUpload,
-          icon: const Icon(Icons.cloud_upload),
-          label: Text(t(context, 'upload_files', args: {'count': '${_selectedFiles.length}'})),
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size.fromHeight(50),
+      bottomNavigationBar: SafeArea(
+        minimum: const EdgeInsets.only(bottom: 16.0),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: ElevatedButton.icon(
+            onPressed: _isUploading || _selectedFiles.isEmpty
+                ? null
+                : _startUpload,
+            icon: const Icon(Icons.cloud_upload),
+            label: Text(
+              t(
+                context,
+                'upload_files',
+                args: {'count': '${_selectedFiles.length}'},
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size.fromHeight(50),
+            ),
           ),
         ),
       ),
