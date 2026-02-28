@@ -23,7 +23,7 @@ const Map<String, Map<String, String>> _translations = {
     'save': 'Save',
   },
   'de': {
-    'app_title': 'Nextcloud Hochlader',
+    'app_title': 'Nextcloud Uploader',
     'camera': 'Kamera',
     'gallery': 'Galerie',
     'select_folder': 'Ordner wählen',
