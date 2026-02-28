@@ -1,13 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path/path.dart' as p;
-import 'package:workmanager/workmanager.dart';
-
-import '../services/webdav_service.dart';
-import '../l10n/translations.dart';
 import 'package:flutter/widget_previews.dart';
-import '../background.dart';
+
+import '../l10n/translations.dart';
+import '../widgets/upload_manager.dart';
+import '../widgets/image_viewer.dart';
 
 @Preview(name: 'Upload Selection Page')
 Widget uploadSelectionPagePreview() =>
@@ -28,7 +26,6 @@ class UploadSelectionPage extends StatefulWidget {
 }
 
 class _UploadSelectionPageState extends State<UploadSelectionPage> {
-  final _service = WebDavService();
   final ImagePicker _picker = ImagePicker();
   List<XFile> _selectedFiles = [];
   bool _isUploading = false;
@@ -68,35 +65,18 @@ class _UploadSelectionPageState extends State<UploadSelectionPage> {
     setState(() => _isUploading = true);
 
     try {
-      // Queue a background task for persistence
-      // This runs even if the app is backgrounded or the screen locks
-      final paths = _selectedFiles.map((f) => f.path).toList();
-      await Workmanager().registerOneOffTask(
-        'uploadTask-${DateTime.now().millisecondsSinceEpoch}',
-        uploadTaskName,
-        inputData: {'paths': paths, 'remotePath': widget.remotePath},
-        existingWorkPolicy: ExistingWorkPolicy.append,
-        backoffPolicy: BackoffPolicy.exponential,
+      await UploadManager().queueAndUploadFiles(
+        files: _selectedFiles,
+        remotePath: widget.remotePath,
+        onProgress: (p) {
+          if (mounted) setState(() => _uploadProgress = p);
+        },
       );
-
-      // Also perform the upload immediately so user sees progress on-screen
-      for (int i = 0; i < _selectedFiles.length; i++) {
-        final file = _selectedFiles[i];
-        final bytes = await file.readAsBytes();
-        final destination = p.join(widget.remotePath, p.basename(file.path));
-
-        await _service.uploadFile(destination, bytes);
-
-        if (mounted) {
-          setState(() => _uploadProgress = (i + 1) / _selectedFiles.length);
-        }
-      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Files queued for upload!')),
         );
-        // Stay on the page instead of popping so user can verify or upload more
         setState(() => _isUploading = false);
       }
     } catch (e) {
@@ -159,7 +139,7 @@ class _UploadSelectionPageState extends State<UploadSelectionPage> {
                     itemBuilder: (ctx, i) {
                       final file = File(_selectedFiles[i].path);
                       return GestureDetector(
-                        onTap: () => _showImagePreview(file),
+                        onTap: () => showImagePreview(context, file),
                         child: Stack(
                           fit: StackFit.expand,
                           children: [
@@ -217,42 +197,6 @@ class _UploadSelectionPageState extends State<UploadSelectionPage> {
           ),
         ),
       ),
-    );
-  }
-
-  void _showImagePreview(File file) {
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (ctx) {
-        final size = MediaQuery.of(ctx).size;
-        return Dialog(
-          insetPadding: EdgeInsets.zero,
-          backgroundColor: Colors.black,
-          child: Stack(
-            children: [
-              SizedBox(
-                width: size.width,
-                height: size.height,
-                child: InteractiveViewer(
-                  panEnabled: true,
-                  minScale: 0.5,
-                  maxScale: 5.0,
-                  child: Center(child: Image.file(file, fit: BoxFit.contain)),
-                ),
-              ),
-              Positioned(
-                top: 40,
-                right: 16,
-                child: IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white, size: 30),
-                  onPressed: () => Navigator.of(ctx).pop(),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }
