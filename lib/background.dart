@@ -2,7 +2,9 @@ import 'dart:io';
 import 'package:workmanager/workmanager.dart';
 import 'package:path/path.dart' as p;
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'services/webdav_service.dart';
+import 'services/upload_status.dart';
 
 /// Name given to the upload task; Workmanager uses it to identify what to
 /// execute in the background callback.
@@ -15,6 +17,11 @@ const String uploadTaskName = 'backgroundUploadTask';
 /// isolate.  It must be a top-level or static function.
 /// Per the workmanager example: https://github.com/fluttercommunity/flutter_workmanager/tree/main/example
 void callbackDispatcher() {
+  // Workmanager executes this on a background isolate; certain plugins
+  // (like path_provider used by UploadStatus) require the binding to be
+  // initialized on that isolate as well.
+  WidgetsFlutterBinding.ensureInitialized();
+
   Workmanager().executeTask((task, inputData) async {
     try {
       if (task == uploadTaskName) {
@@ -59,6 +66,15 @@ void callbackDispatcher() {
         debugPrint(
           '[background] Upload complete. Success: $successCount, Failed: $failureCount',
         );
+
+        // Persist completion status so the UI can detect it when the app
+        // resumes (background isolates cannot directly update UI).
+        try {
+          await UploadStatus.markCompleted(successCount, failureCount);
+          debugPrint('[background] status file written');
+        } catch (e) {
+          debugPrint('[background] Failed to write status file: $e');
+        }
 
         // Return true if all succeeded; false (retry) if some failed
         if (failureCount > 0) {

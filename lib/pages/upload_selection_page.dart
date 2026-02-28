@@ -6,6 +6,7 @@ import 'package:flutter/widget_previews.dart';
 import '../l10n/translations.dart';
 import '../widgets/upload_manager.dart';
 import '../widgets/image_viewer.dart';
+import '../services/upload_status.dart';
 
 @Preview(name: 'Upload Selection Page')
 Widget uploadSelectionPagePreview() =>
@@ -35,6 +36,40 @@ class _UploadSelectionPageState extends State<UploadSelectionPage> {
   void initState() {
     super.initState();
     _pickInitialFiles();
+    // Check immediately in case app was killed during a background upload
+    // and was restarted.
+    _checkUploadStatusAndNavigate();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  Future<void> _checkUploadStatusAndNavigate() async {
+    try {
+      final status = await UploadStatus.readStatus();
+      debugPrint('UploadSelectionPage read status: $status');
+      if (status == null) return;
+
+      if (status.state == 'completed' && mounted) {
+        final message =
+            'Background upload finished. Success: ${status.success}, Failed: ${status.failure}';
+        await _finishUpload(message);
+      }
+    } catch (e) {
+      debugPrint('UploadSelectionPage error reading status: $e');
+    }
+  }
+
+  Future<void> _finishUpload(String message) async {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+    await UploadStatus.clear();
+    if (mounted) {
+      Navigator.of(context).popUntil((r) => r.isFirst);
+    }
   }
 
   Future<void> _pickInitialFiles() async {
@@ -74,10 +109,8 @@ class _UploadSelectionPageState extends State<UploadSelectionPage> {
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Files queued for upload!')),
-        );
         setState(() => _isUploading = false);
+        await _finishUpload('Upload completed successfully!');
       }
     } catch (e) {
       if (mounted) {

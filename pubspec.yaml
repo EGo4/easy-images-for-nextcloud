@@ -23,6 +23,8 @@ dependencies:
   flutter_launcher_icons: ^0.14.4
   # background tasks for Android/iOS
   workmanager: ^0.9.0+3
+  # For application directories used by the background isolate to write status
+  path_provider: ^2.0.15
 
 
 

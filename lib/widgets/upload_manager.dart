@@ -6,6 +6,7 @@ import 'package:workmanager/workmanager.dart';
 
 import '../background.dart';
 import '../services/webdav_service.dart';
+import '../services/upload_status.dart';
 
 /// Helper responsible for queuing files for background upload and performing an
 /// immediate upload so the user can see progress.
@@ -25,6 +26,9 @@ class UploadManager {
     required void Function(double progress) onProgress,
   }) async {
     if (files.isEmpty) return;
+
+    // mark pending so UI can detect work in progress even when app is locked
+    await UploadStatus.markPending(files.length);
 
     // schedule a background task so the work gets retried if the app is killed
     final paths = files.map((f) => f.path).toList();
